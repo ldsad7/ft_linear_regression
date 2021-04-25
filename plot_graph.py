@@ -19,25 +19,32 @@ def plot_3d_graph(feature_arrays: List[List[float]], target_values: List[float],
         assert len(feature_array) == 2, "Ожидается 3D линейная регрессия, было подано не 2 значения фичей"
     assert len(feature_arrays) == len(target_values), "Число поданных массивов со значениями фичей " \
                                                       "и целевыми значениями отличаются"
+    if verbose:
+        print(f'figsize графика: {(12, 6)}')
     fig, ax = plt.subplots(figsize=(12, 6), subplot_kw={"projection": "3d"})
     xs = [feature_array[0] for feature_array in feature_arrays]
     ys = [feature_array[1] for feature_array in feature_arrays]
+    if verbose:
+        print(f'Цвет данных на графике: "red"')
     ax.scatter(xs, ys, target_values, color="red", label="Данные")
 
     dct: NormalizationParams = get_normalization_params_from_file(params_file)
     assert len(dct.feature_mins) == 3 and len(dct.feature_maxs) == 3 and \
            len(dct.columns) == 2, f"Некорректные данные по пути {params_file}"
-    xs = np.arange(*ax.get_xlim(), (dct.feature_maxs[1] - dct.feature_mins[1]) / NUM_OF_STEPS)
-    ys = np.arange(*ax.get_ylim(), (dct.feature_maxs[2] - dct.feature_mins[2]) / NUM_OF_STEPS)
-
-    gd: GradientDescent = GradientDescent(verbose=verbose)
-    zs = gd.predict([[x, y] for x in xs for y in ys], params_file)
+    x_borders = ax.get_xlim()
+    y_borders = ax.get_ylim()
+    xs = np.arange(*x_borders, (x_borders[1] - x_borders[0]) / NUM_OF_STEPS)
+    ys = np.arange(*y_borders, (y_borders[1] - y_borders[0]) / NUM_OF_STEPS)
 
     xs, ys = np.meshgrid(xs, ys)
-    zs = np.array(zs).reshape(xs.shape)
+    coef = dct.coefs[0] + dct.coefs[1] * (xs - dct.feature_mins[1]) / (dct.feature_maxs[1] - dct.feature_mins[1] or 1) + \
+        dct.coefs[2] * (ys - dct.feature_mins[2]) / (dct.feature_maxs[2] - dct.feature_mins[2] or 1)
+    zs = coef * (dct.max_target_value - dct.min_target_value) + dct.min_target_value
+
     surf = ax.plot_surface(xs, ys, zs, label="Плоскость линейной регрессии")
-    # https://stackoverflow.com/a/54994985
+
     try:
+        # https://stackoverflow.com/a/54994985
         surf._facecolors2d = surf._facecolor3d
         surf._edgecolors2d = surf._edgecolor3d
     except Exception:
@@ -57,7 +64,11 @@ def plot_2d_graph(feature_arrays: List[List[float]], target_values: List[float],
         assert len(feature_array) == 1, "Ожидается 2D линейная регрессия, было подано больше значений фичей"
     assert len(feature_arrays) == len(target_values), "Число поданных массивов со значениями фичей " \
                                                       "и целевыми значениями отличаются"
+    if verbose:
+        print(f'figsize графика: {(12, 6)}')
     fig, ax = plt.subplots(figsize=(12, 6))
+    if verbose:
+        print(f'Цвет данных на графике: "red"')
     ax.scatter(feature_arrays, target_values, label="Данные", color="red")
 
     dct: NormalizationParams = get_normalization_params_from_file(params_file)
@@ -68,7 +79,7 @@ def plot_2d_graph(feature_arrays: List[List[float]], target_values: List[float],
     if not NUM_OF_STEPS:
         raise ValueError("Переменная NUM_OF_STEPS не может быть нулевой")
     xs: List[List[float]] = [
-        [i] for i in range(*borders, int((dct.feature_maxs[1] - dct.feature_mins[1]) / NUM_OF_STEPS))
+        [i] for i in np.arange(*borders, (borders[1] - borders[0]) / NUM_OF_STEPS)
     ]
 
     gd: GradientDescent = GradientDescent(verbose=verbose)

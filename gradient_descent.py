@@ -20,7 +20,6 @@ class GradientDescent:
         """
         counts MSE divided by 2
         """
-
         values = self._count_cost_values()
         if not self._feature_arrays:
             raise ValueError("Массивы с фичами пустые, невозможноно посчитать MSE")
@@ -30,9 +29,10 @@ class GradientDescent:
         for feature_array in self._feature_arrays:
             for i in range(len(feature_array)):
                 if feature_maxs[i] == feature_mins[i]:
-                    feature_array[i] = 1.0
+                    feature_array[i] = 1.0 - 10e-10
                 else:
-                    feature_array[i] = (feature_array[i] - feature_mins[i]) / (feature_maxs[i] - feature_mins[i])
+                    feature_array[i] = (feature_array[i] - feature_mins[i] + 10e-10) / \
+                                       (feature_maxs[i] - feature_mins[i])
 
     def _normalize_target_values(self, min_target_value: float, max_target_value: float) -> None:
         for i in range(len(self._target_values)):
@@ -63,7 +63,7 @@ class GradientDescent:
         return normalization_params
 
     def fit(self, feature_arrays: List[List[float]], target_values: List[float], coefs: Optional[List[float]] = None,
-            learning_rate: float = 0.01, epsilon: float = 10e-7, file_with_params: str = "params.json") -> None:
+            learning_rate: float = 0.01, epsilon: float = 10e-10, file_with_params: str = "params.json") -> None:
         assert len(feature_arrays) > 0, "Поданный массив со значениями фич пуст"
         feature_arrays: List[List[float]] = [[1.0] + feature_array for feature_array in feature_arrays]
         target_values = target_values[:]
@@ -120,15 +120,17 @@ class GradientDescent:
         m = len(self._feature_arrays)
         values = self._count_cost_values()
         need_to_stop = False
+        step_sizes: List[float] = []
         new_coefs: List[float] = []
         for i, coef in enumerate(self.coefs):
             step_size = (self._lr / m) * sum(
                 value * feature_array[i] for feature_array, value in zip(self._feature_arrays, values)
             )
-            if abs(step_size) < self._epsilon:
-                need_to_stop = True
+            step_sizes.append(step_size)
             new_coefs.append(self.coefs[i] - step_size)
-        if not need_to_stop:
+        if sum(step_size ** 2 for step_size in step_sizes) ** (1 / 2) < self._epsilon:
+            need_to_stop = True
+        else:
             self.coefs = new_coefs  # simultaneous update
         return need_to_stop
 

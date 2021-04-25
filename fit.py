@@ -61,11 +61,16 @@ def main(path: str, verbose: bool = False, separator: str = ',', number_of_targe
     )
     gd = GradientDescent(verbose=verbose, columns=columns, target_column=target_column)
     gd.fit(feature_arrays, target_values, file_with_params=file_with_params)
-    # print(f'predictions on [[240000], [139800], [61789]]: {gd.predict([[240000], [139800], [61789]])}')
     # print(f"MSE: {gd.count_cost()}")
     # if len(columns) == 1:
-    #     from plot_2d_graph import plot_2d_graph
+    #     print(f'predictions on [[240000], [139800], [61789]]: {gd.predict([[240000], [139800], [61789]])}')
+    #     from plot_graph import plot_2d_graph
     #     plot_2d_graph(feature_arrays, target_values, file_with_params)
+    # elif len(columns) == 2:
+    #     print(f'predictions on [[13, 240000], [999, 84000], [2080, 61789]]: '
+    #           f'{gd.predict([[13, 240000], [999, 84000], [2080, 61789]])}')
+    #     from plot_graph import plot_3d_graph
+    #     plot_3d_graph(feature_arrays, target_values, file_with_params)
 
 
 if __name__ == '__main__':
