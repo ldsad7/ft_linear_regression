@@ -55,12 +55,14 @@ def read_dataset(path: str, verbose: bool = False, separator: str = ',',
 
 
 def main(path: str, verbose: bool = False, separator: str = ',', number_of_target_feature: int = -1,
-         file_with_params: str = "params.json") -> None:
+         file_with_params: str = "params.json", learning_rate: float = 0.01, epsilon: float = 10e-10) -> None:
     feature_arrays, target_values, columns, target_column = read_dataset(
         path, verbose=verbose, separator=separator, number_of_target_feature=number_of_target_feature
     )
     gd = GradientDescent(verbose=verbose, columns=columns, target_column=target_column)
-    gd.fit(feature_arrays, target_values, file_with_params=file_with_params)
+    gd.fit(
+        feature_arrays, target_values, file_with_params=file_with_params, learning_rate=learning_rate, epsilon=epsilon
+    )
     # print(f"MSE: {gd.count_cost()}")
     # if len(columns) == 1:
     #     print(f'predictions on [[240000], [139800], [61789]]: {gd.predict([[240000], [139800], [61789]])}')
@@ -83,6 +85,11 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--separator', type=str, default=',', help='разделитель в файле с датасетом')
     parser.add_argument('-f', '--file_with_params', type=str, default='params.json',
                         help='путь к файлу, куда нужно сохранить значения для обученной модели')
+    parser.add_argument('-lr', '--learning_rate', type=float, default=0.01, help='скорость обучения')
+    parser.add_argument(
+        '-eps', '--epsilon', type=float, default=10e-10,
+        help='порог размера шага, при достижении которого мы прекращаем обучение'
+    )
     parser.add_argument(
         '-n', '--number_of_target_value', type=int, default=-1,
         help='номер целевой переменной в датасете '
@@ -92,8 +99,8 @@ if __name__ == '__main__':
     try:
         main(
             args.path, verbose=args.verbose, separator=args.separator,
-            number_of_target_feature=args.number_of_target_value,
-            file_with_params=args.file_with_params
+            number_of_target_feature=args.number_of_target_value, file_with_params=args.file_with_params,
+            learning_rate=args.learning_rate, epsilon=args.epsilon
         )
     except Exception as e:
         print(f'Произошла ошибка: {e}')
